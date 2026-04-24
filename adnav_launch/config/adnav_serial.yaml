@@ -13,8 +13,8 @@ adnav_node:
     ################ Serial Communication Parameters
     # Supported Baud Rates: 2.4K, 4.8K, 9.6K, 19.2K, 38.4K, 57.6K.
     # 115.2K, 230.4K, 460.8K, 500K, 576K, 921.6K, 1M, 2M
-    baud_rate: 1000000
-    com_port: ttyUSB1
+    baud_rate: 115200
+    com_port: ttyUSB0
 
     ################ IP Communication Parameters
     # IP of the Advanced Navigation Device. 
@@ -27,7 +27,7 @@ adnav_node:
     # The configuration will be rejected if publissh_us < read_us
     # Units are in μs. 20000 = 50Hz | 1000 = 1000Hz etc.
     publish_us: 20000
-    read_us: 1000
+    read_us: 10000
 
     ################ Packet Parameters
     # This is the setup for what ANPP Packets you wish to read from your
@@ -45,4 +45,36 @@ adnav_node:
     
     # The size of the packet period in Microseconds. 
     # Bounded to [1000-65535] [1000Hz-15.29Hz]
-    packet_timer_period: 1000
+    packet_timer_period: 10000
+
+
+#    System Packets
+# ID    Length  R/W  Name
+# 0		4		R	 Acknowledge Packet
+# 1		Varies	W	 Request Packet
+# 2		1		R/W	 Boot Mode Packet
+# 3		24		R	 Device Information Packet
+# 4		4		W	 Restore Factory Settings Pa
+# 5		4		W	 Reset Packet
+
+#     State Packets
+# ID     Length R/W  Name
+# 20 	 100    R    System State Packet
+# 21 	 8   	R    Time Packet
+# 23 	 4   	R    Status Packet
+# 26 	 12  	R    Euler Orientation Standard Deviation Packet
+# 27 	 16  	R    Quaternion Orientation Standard Deviation Packet
+# 28 	 48  	R    Raw Sensors Packet
+# 37 	 12  	R    Acceleration Packet
+# 39 	 12  	R    Euler Orientation Packet
+# 40 	 16  	R    Quaternion Orientation Packet
+# 41 	 36  	R    DCM Orientation Packet
+# 42 	 12  	R    Angular Velocity Packet
+# 43 	 12  	R    Angular Acceleration Packet
+# 44 	 60  	R/W  External Position & Velocity Packet
+# 45 	 36  	R/W  External Position Packet
+# 46 	 24  	R/W  External Velocity Packet
+# 48 	 8   	R/W  External Heading Packet
+# 49 	 8   	R    Running Time Packet
+# 50 	 12  	R    Local Magnetic Field Packet
+    

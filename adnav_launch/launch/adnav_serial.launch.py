@@ -18,7 +18,7 @@ def generate_launch_description():
         executable = 'adnav_driver',
         emulate_tty = True,
         output = 'screen',
-        # arguments=['--ros-args', '--log-level', 'debug'],
+        arguments=['--ros-args', '--log-level', 'error'],
         parameters = [config]        
     )
 

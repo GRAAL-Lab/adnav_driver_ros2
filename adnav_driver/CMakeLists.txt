@@ -34,42 +34,66 @@ find_package(adnav_interfaces REQUIRED)
 
 # Build
 include_directories(
-  include/adnav_driver
-  ../an-ros-common/include
+  include
+  ${adnav_interfaces_INCLUDE_DIRS}
 )
 
 aux_source_directory(src src_MAIN)
-aux_source_directory(../an-ros-common/src src_COMMON)
+aux_source_directory(../adnav_interfaces/src src_COMMON)
 
 add_library(${PROJECT_NAME}_lib
   ${src_MAIN}
   ${src_COMMON}
 )
 
-set(DEPENDENCIES
-  "rclcpp"
-  "std_msgs"
-  "std_srvs"
-  "sensor_msgs"
-  "diagnostic_msgs"
-  "geometry_msgs"
-  "tf2"
-  "adnav_interfaces"
+target_link_libraries(${PROJECT_NAME}_lib PUBLIC
+	${adnav_interfaces_TARGETS}
+	${diagnostic_msgs_TARGETS}
+	${geometry_msgs_TARGETS}
+	${sensor_msgs_TARGETS}
+	${std_msgs_TARGETS}
+	${std_srvs_TARGETS}
+	rclcpp::rclcpp
+	sensor_msgs::sensor_msgs_library
+	tf2::tf2
 )
 
-set(EXECUTABLE_NAME "adnav_driver")
+#set(DEPENDENCIES
+#  "rclcpp"
+#  "std_msgs"
+#  "std_srvs"
+#  "sensor_msgs"
+#  "diagnostic_msgs"
+#  "geometry_msgs"
+#  "tf2"
+#  "adnav_interfaces"
+#)
+#ament_target_dependencies(${PROJECT_NAME}_lib ${DEPENDENCIES})
 
-ament_target_dependencies(${PROJECT_NAME}_lib ${DEPENDENCIES})
+#set(EXECUTABLE_NAME "adnav_driver")
 
-add_executable(${EXECUTABLE_NAME} src/main.cpp)
-target_link_libraries(${EXECUTABLE_NAME} ${PROJECT_NAME}_lib)
-ament_target_dependencies(${EXECUTABLE_NAME} ${DEPENDENCIES})
+add_executable(${PROJECT_NAME} src/main.cpp)
+#target_link_libraries(${EXECUTABLE_NAME} ${PROJECT_NAME}_lib)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+	${adnav_interfaces_TARGETS}
+	${diagnostic_msgs_TARGETS}
+	${geometry_msgs_TARGETS}
+	${sensor_msgs_TARGETS}
+	${std_msgs_TARGETS}
+	${std_srvs_TARGETS}
+	${PROJECT_NAME}_lib
+	rclcpp::rclcpp
+	sensor_msgs::sensor_msgs_library
+	tf2::tf2
+)
+
+#ament_target_dependencies(${EXECUTABLE_NAME} ${DEPENDENCIES})
 
 # add_executable(srv_test src/srv_test.cpp)
 # target_link_libraries(srv_test ${PROJECT_NAME}_lib)
 # ament_target_dependencies(srv_test ${DEPENDENCIES})
 
-install(TARGETS ${EXECUTABLE_NAME}
+install(TARGETS ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
 

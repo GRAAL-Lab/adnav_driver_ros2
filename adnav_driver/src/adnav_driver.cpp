@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "adnav_driver.h"
+#include "adnav_driver/adnav_driver.h"
 
 namespace adnav {
 /**
@@ -175,7 +175,7 @@ void Driver::createPublishers() {
 	barometric_pressure_pub_ = this->create_publisher<sensor_msgs::msg::FluidPressure>(std::string(node_name_ + "/barometric_pressure"), 10);
 	temperature_pub_ = this->create_publisher<sensor_msgs::msg::Temperature>(std::string(node_name_ + "/temperature"), 10);
 	twist_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(std::string(node_name_ + "/twist"), 10);
-	pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose>(std::string(node_name_ + "/pose"), 10);
+	pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(std::string(node_name_ + "/pose"), 10);
 	system_status_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>(std::string(node_name_ + "/system_status"), 10);
 	filter_status_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>(std::string(node_name_ + "/filter_status"), 10);
 }
@@ -184,6 +184,9 @@ void Driver::createPublishers() {
  * @brief Function to declare and assign callbacks to services for the adnav_driver node.
  */
 void Driver::createServices() {
+
+	rclcpp::QoS qos(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_services_default));
+
 	packet_period_srv_ = this->create_service<adnav_interfaces::srv::PacketPeriods>(
 		(node_name_ + "/packet_periods"),
 		std::bind(
@@ -191,7 +194,7 @@ void Driver::createServices() {
 			this,
 			std::placeholders::_1,
 			std::placeholders::_2),
-		rmw_qos_profile_services_default,
+		qos,
 		service_group_);
 
 	packet_period_timer_srv_ = this->create_service<adnav_interfaces::srv::PacketTimerPeriod>(
@@ -201,7 +204,7 @@ void Driver::createServices() {
 			this,
 			std::placeholders::_1,
 			std::placeholders::_2),
-		rmw_qos_profile_services_default,
+		qos,
 		service_group_);
 
 	request_packet_srv_ = this->create_service<adnav_interfaces::srv::RequestPackets>(
@@ -211,7 +214,7 @@ void Driver::createServices() {
 			this,
 			std::placeholders::_1,
 			std::placeholders::_2),
-		rmw_qos_profile_services_default,
+		qos,
 		service_group_);
 
 	ntrip_srv_ = this->create_service<adnav_interfaces::srv::Ntrip>(
@@ -221,7 +224,7 @@ void Driver::createServices() {
 			this,
 			std::placeholders::_1,
 			std::placeholders::_2),
-		rmw_qos_profile_services_default,
+		qos,
 		service_group_);
 }
 
@@ -1558,9 +1561,12 @@ void Driver::systemStateRosDecoder(an_packet_t* an_packet) {
 
 	if(decode_system_state_packet(&system_state_packet, an_packet) == 0)
 	 {
-			// NAVSATFIX
-			nav_fix_msg_.header.stamp.sec = system_state_packet.unix_time_seconds;
-			nav_fix_msg_.header.stamp.nanosec = system_state_packet.microseconds*1000;
+			// NAVSATFIX - stamp with current ROS time (respects /use_sim_time)
+			{
+				auto now_ns = this->get_clock()->now().nanoseconds();
+				nav_fix_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+				nav_fix_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+			}
 			nav_fix_msg_.header.frame_id = frame_id_;
 			if ((system_state_packet.filter_status.b.gnss_fix_type == gnss_fix_2d) ||
 				(system_state_packet.filter_status.b.gnss_fix_type == gnss_fix_3d))
@@ -1610,9 +1616,12 @@ void Driver::systemStateRosDecoder(an_packet_t* an_packet) {
 			twist_msg_.angular.z = system_state_packet.angular_velocity[2];
 
 
-			// IMU
-			imu_msg_.header.stamp.sec = system_state_packet.unix_time_seconds;
-			imu_msg_.header.stamp.nanosec = system_state_packet.microseconds*1000;
+			// IMU - stamp with current ROS time (respects /use_sim_time)
+			{
+				auto now_ns = this->get_clock()->now().nanoseconds();
+				imu_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+				imu_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+			}
 			imu_msg_.header.frame_id = frame_id_;
 			// Using the RPY orientation as done by cosama
 			orientation_.setRPY(
@@ -1625,11 +1634,16 @@ void Driver::systemStateRosDecoder(an_packet_t* an_packet) {
 			imu_msg_.orientation.z = orientation_[2];
 			imu_msg_.orientation.w = orientation_[3];
 
-			// POSE Orientation
-			pose_msg_.orientation.x = orientation_[0];
-			pose_msg_.orientation.y = orientation_[1];
-			pose_msg_.orientation.z = orientation_[2];
-			pose_msg_.orientation.w = orientation_[3];
+			// POSE Orientation - stamp with current ROS time (respects /use_sim_time)
+			{
+				auto now_ns = this->get_clock()->now().nanoseconds();
+				pose_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+				pose_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+			}
+			pose_msg_.pose.orientation.x = orientation_[0];
+			pose_msg_.pose.orientation.y = orientation_[1];
+			pose_msg_.pose.orientation.z = orientation_[2];
+			pose_msg_.pose.orientation.w = orientation_[3];
 
 			imu_msg_.angular_velocity.x = system_state_packet.angular_velocity[0]; // These the same as the TWIST msg values
 			imu_msg_.angular_velocity.y = system_state_packet.angular_velocity[1];
@@ -1820,9 +1834,9 @@ void Driver::ecefPosRosDecoder(an_packet_t* an_packet) {
 	// ECEF Position (in meters) Packet for Pose Message
 	if(decode_ecef_position_packet(&ecef_position_packet, an_packet) == 0)
 	 {
-		pose_msg_.position.x = ecef_position_packet.position[0];
-		pose_msg_.position.y = ecef_position_packet.position[1];
-		pose_msg_.position.z = ecef_position_packet.position[2];
+		pose_msg_.pose.position.x = ecef_position_packet.position[0];
+		pose_msg_.pose.position.y = ecef_position_packet.position[1];
+		pose_msg_.pose.position.z = ecef_position_packet.position[2];
 	}
 	// Now that work is complete notify an update for the publisher.
 	msg_write_done_ = true;
@@ -1884,11 +1898,21 @@ void Driver::rawSensorsRosDecoder(an_packet_t* an_packet) {
 
 		// RAW MAGNETICFIELD VALUE FROM IMU
 		mag_field_msg_.header.frame_id = frame_id_;
+		{
+			auto now_ns = this->get_clock()->now().nanoseconds();
+			mag_field_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+			mag_field_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+		}
 		mag_field_msg_.magnetic_field.x = raw_sensors_packet.magnetometers[0];
 		mag_field_msg_.magnetic_field.y = raw_sensors_packet.magnetometers[1];
 		mag_field_msg_.magnetic_field.z = raw_sensors_packet.magnetometers[2];
 
 		imu_raw_msg_.header.frame_id = frame_id_;
+		{
+			auto now_ns = this->get_clock()->now().nanoseconds();
+			imu_raw_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+			imu_raw_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+		}
 		imu_raw_msg_.orientation_covariance[0] = -1; // Tell recievers that no orientation is sent.
 		imu_raw_msg_.linear_acceleration.x = raw_sensors_packet.accelerometers[0];
 		imu_raw_msg_.linear_acceleration.y = raw_sensors_packet.accelerometers[1];
@@ -1899,10 +1923,20 @@ void Driver::rawSensorsRosDecoder(an_packet_t* an_packet) {
 
 		// BAROMETRIC PRESSURE
 		baro_msg_.header.frame_id = frame_id_;
+		{
+			auto now_ns = this->get_clock()->now().nanoseconds();
+			baro_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+			baro_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+		}
 		baro_msg_.fluid_pressure = raw_sensors_packet.pressure;
 
 		// TEMPERATURE
 		temp_msg_.header.frame_id = frame_id_;
+		{
+			auto now_ns = this->get_clock()->now().nanoseconds();
+			temp_msg_.header.stamp.sec = static_cast<int32_t>(now_ns / 1000000000LL);
+			temp_msg_.header.stamp.nanosec = static_cast<uint32_t>(now_ns % 1000000000LL);
+		}
 		temp_msg_.temperature = raw_sensors_packet.pressure_temperature;
 
 	}
