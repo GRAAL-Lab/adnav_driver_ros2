@@ -17,7 +17,7 @@ This driver is designed to work with all Advanced Navigation INS devices using A
 
 The code has been written to be easy to understand and for ease of extensibility with other ANPP packets. If you wish to extend the driver please see the [Extending the Driver](#extending-the-driver) Section. 
 
-This example has been developed and tested using **Ubuntu Linux v22.04 LTS** and **ROS2 Humble Hawksbill**. Installation instructions for ROS2 can be found [here](https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html "Installation -- ROS 2 Documentation"): 
+This example has been developed and tested using **Ubuntu 24.04 LTS** and **ROS2 Jazzy**. Installation instructions for ROS2 can be found [here](https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html "Installation -- ROS 2 Documentation"): 
 
 If you require any assistance using this driver, please email [support@advancednavigation.com](mailto:support@advancednavigation.com)
 
@@ -27,7 +27,7 @@ If you require any assistance using this driver, please email [support@advancedn
 
 The following guides are useful in getting started with ROS2 if you are not familiar:
 
-- [ROS 2 Humble Tutorials](https://docs.ros.org/en/humble/Tutorials.html "Tutorials -- ROS 2 Documentation")
+- [ROS 2 Jazzy Tutorials](https://docs.ros.org/en/jazzy/Tutorials.html "Tutorials -- ROS 2 Documentation")
 - [Setting up a ROS2 Workspace](https://index.ros.org/doc/ros2/Tutorials/Workspace/Creating-A-Workspace/ "Creating a Workspace")
 - [Basic Tutorial on importing an Example ROS2 code and compiling and running](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/ "Writing a Simple CPP Publisher and Subscriber")
 
@@ -40,12 +40,12 @@ The following guides are useful in getting started with ROS2 if you are not fami
   ```
 - You likely already have the `rclcpp` and `_msgs` packages installed as part of your ROS2 system. Either way, it’s good practice to run rosdep in the root of your workspace (`workspace-folder-name`) to check for missing dependencies before building:
   ```
-  $ rosdep install -i --from-path src --rosdistro humble -y
+  $ rosdep install -i --from-path src --rosdistro jazzy -y
   ```
 - In the root of your workspace, `workspace-folder-name`, source and build the package:
   - Source the ROS2 Environment to the current folder:
     ```
-    $ source /opt/ros/humble/setup.bash
+    $ source /opt/ros/jazzy/setup.bash
     ```
   - Build your package:
     ```
@@ -131,7 +131,7 @@ $ ros2 topic hz /imu
 
 Open a new terminal or new tab, navigate to `workspace-folder-name`, and source the setup files:
 ```
-$ source /opt/ros/humble/setup.bash
+$ source /opt/ros/jazzy/setup.bash
 $ source install/setup.bash
 ```
 
@@ -156,7 +156,7 @@ You can view the topics published to by the driver using the `ros2 topic` comman
 
 - Open a new terminal and navigate to your `workspace-folder-name` and source your ROS install and workspace:
   ```
-  $ source /opt/ros/humble/setup.bash
+  $ source /opt/ros/jazzy/setup.bash
   $ source install/setup.bash
   ```
 - Launch the driver
@@ -387,7 +387,7 @@ string reason
 - From this we can see that there are two calling fields (enable and the adnav_interfaces/NtripData structure which holds connection information), and two responing fields (a success flag and a success reason). 
   
 ### Calling the NTRIP Service
-The NTRIP Service is like any other service in ros2 and can be called wither by other nodes, or through the CLI. Please see the following tutorials on hwo to make a simple service client. [(C++)](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Service-And-Client.html#write-the-client-node)[(Python)](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Service-And-Client.html#write-the-client-node)  
+The NTRIP Service is like any other service in ros2 and can be called wither by other nodes, or through the CLI. Please see the following tutorials on hwo to make a simple service client. [(C++)](https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Cpp-Service-And-Client.html#write-the-client-node)[(Python)](https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Service-And-Client.html#write-the-client-node)  
 
 To use the CLI you will need to provide the calling data in the service call in a new terminal using YAML syntax as shown below. Ensure your new terminal has sourced the `setup.bash` file.  
 
